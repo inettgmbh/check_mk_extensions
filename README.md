@@ -1,2 +1,2 @@
 # check_mk_extensions
-Extansions for Check MK Monitoring
+Extensions for Check MK Monitoring - inett GmbH
