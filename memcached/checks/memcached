@@ -1,0 +1,61 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+
+# (c) 2017 Marco Gabriel - inett GmbH <mgabriel@inett.de>
+
+# This is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  This file is distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+def inventory_memcached(info):
+    inventory = []
+    inventory.append(('efficiency', None))
+    return inventory
+
+def check_memcached(item, params, info):
+    rc = 0
+    perfdata = []
+    text = []
+    if len(info) == 0:
+        return (3, 'no data', [])
+
+    for line in info:
+        if line[0] == "STAT":
+            if line[1] == "curr_connections":
+                curr_connections = int(line[2])
+            elif line[1] == "total_connections":
+                total_connections = int(line[2])
+            elif line[1] == "get_hits":
+                get_hits = int(line[2])
+            elif line[1] == "get_misses":
+                get_misses = int(line[2])
+            elif line[1] == "version":
+                version = line[2]
+            elif line[1] == "uptime":
+                uptime = int(line[2])
+
+    requests = int(get_hits + get_misses)
+    hitpct = float(get_hits)/requests*100
+    misspct = float(get_misses)/requests*100
+
+    return (rc, "memcached %s - Hit%%: %.2f - Miss%%: %.2f - Conn Cur/Highest: %s/%s" % (version, hitpct, misspct, curr_connections, total_connections), [
+        ("Hits %", hitpct),
+        ("Miss %", misspct),
+        ("Connections", curr_connections),
+        ("Connections Max", total_connections)
+        ])
+
+check_info["memcached"] = {
+    'check_function'        : check_memcached,
+    'inventory_function'    : inventory_memcached,
+    'service_description'   : 'memcached',
+    'has_perfdata'          : True,
+}
